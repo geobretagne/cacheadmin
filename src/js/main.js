@@ -44,34 +44,29 @@ Ext.onReady(function () {
    
     
     var createTbarItems = function (m) {
-        var actions = [];
-        var boxctrl = new OpenLayers.Control();
-        OpenLayers.Util.extend(boxctrl, {
-            draw: function () {            
-                this.box = new OpenLayers.Handler.Box(boxctrl, {
-                    "done": this.notice
-                });            
-                this.box.activate();
-            },
-            notice: function (bounds) {                
-                var boxlayer = this.map.getLayersByName('boxlayer')[0];
-                boxlayer.removeAllFeatures();
-                var ll = this.map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.left, bounds.bottom));
-                var ur = this.map.getLonLatFromPixel(new OpenLayers.Pixel(bounds.right, bounds.top));
-                var bounds2 = new OpenLayers.Bounds();
-                bounds2.extend(new OpenLayers.LonLat(ll.lon.toFixed(4), ll.lat.toFixed(4)));
-                bounds2.extend(new OpenLayers.LonLat(ur.lon.toFixed(4), ur.lat.toFixed(4)));
-                var feature = new OpenLayers.Feature.Vector(bounds2.toGeometry());
-                feature.bounds = bounds2;
-                boxlayer.addFeatures(feature);
-                updateExtent(boxlayer);
+        var actions = [];        
+        var boxctrl = new OpenLayers.Control.DrawFeature(m.getLayersByName('boxlayer')[0],
+            OpenLayers.Handler.RegularPolygon, {
+                handlerOptions: {
+                    sides: 4,
+                    irregular: true
+                },
+                callbacks:{                                
+                    'done': function (g) {                                    
+                        this.layer.removeAllFeatures();  
+                        var bounds = g.getBounds();
+                        var feature = new OpenLayers.Feature.Vector(bounds.toGeometry());
+                        this.layer.addFeatures(feature)
+                        updateExtent(this.layer);                                   
+                    }
+                }
             }
-        });
+        );
         
         actions.push(btool = new GeoExt.Action({
             iconCls: "pan",
             map: m,
-            //pressed: true,
+            pressed: true,
             toggleGroup: "tools",
             tooltip: "Glisser - deplacer la carte",
             control: new OpenLayers.Control.Navigation()
@@ -85,7 +80,7 @@ Ext.onReady(function () {
         }));
         actions.push(new GeoExt.Action({
             iconCls: "red_square",
-            pressed: true,
+            pressed: false,
             map: m,
             toggleGroup: "tools",            
             tooltip: "Tracer extent",
@@ -198,7 +193,7 @@ Ext.onReady(function () {
 
     var formExtent = new GeoExt.form.FormPanel({
         title: "Zone sélectionnée :",
-        hidden:true,
+        hidden:false,
         bodyStyle: 'padding: 10px',
         items: [
         {
@@ -357,7 +352,7 @@ Ext.onReady(function () {
     function updateExtent(boxlayer) {
         var form = formExtent.getForm();        
         if (boxlayer.features.length == 1) {
-            var extent = boxlayer.features[0].bounds;
+            var extent = boxlayer.features[0].geometry.bounds;
             form.findField('projection').setValue(boxlayer.projection.projCode);
             form.findField('xmin').setValue(extent.toArray()[0]);
             form.findField('ymin').setValue(extent.toArray()[1]);
