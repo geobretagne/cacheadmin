@@ -30,9 +30,9 @@ Ext.onReady(function () {
     
     styleMap = new OpenLayers.StyleMap({
         "default": new OpenLayers.Style({            
-            strokeColor: "#ff0000",
+            strokeColor: "#00286b",
             fillOpacity: 0,
-            strokeWidth: 2
+            strokeWidth: 3
 
         }),
         "select": new OpenLayers.Style({
